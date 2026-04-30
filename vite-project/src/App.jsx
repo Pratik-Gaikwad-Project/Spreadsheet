@@ -1,122 +1,140 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState } from "react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function getColumnName(index) {
+  let name = "";
+  while (index >= 0) {
+    name = String.fromCharCode((index % 26) + 65) + name;
+    index = Math.floor(index / 26) - 1;
+  }
+  return name;
 }
 
-export default App
+function App() {
+  const [data, setData] = useState(
+    Array(10)
+      .fill()
+      .map(() => Array(10).fill("")),
+  );
+  const [mode, setMode] = useState("row"); // row or col
+  const [operation, setOperation] = useState("avg"); // avg, max, min
+
+  function updateCell(row, col, value) {
+    const newData = [...data];
+    newData[row][col] = value;
+    setData(newData);
+  }
+
+  function addRow() {
+    setData([...data, Array(data[0].length).fill("")]);
+  }
+
+  function addColumn() {
+    setData(data.map((row) => [...row, ""]));
+  }
+
+  function calculate(values) {
+    const nums = values.map((v) => parseFloat(v)).filter((v) => !isNaN(v));
+    if (nums.length === 0) return "";
+    if (operation === "avg")
+      return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2);
+    if (operation === "max") return Math.max(...nums);
+    if (operation === "min") return Math.min(...nums);
+    return "";
+  }
+
+  function applyResults() {
+    if (mode === "row") {
+      const results = data.map((row) => calculate(row));
+      const newData = [...data, results];
+      setData(newData);
+    } else {
+      const results = data[0].map((_, j) => {
+        const colValues = data.map((row) => row[j]);
+        return calculate(colValues);
+      });
+      const newData = data.map((row, i) => [...row, results[i]]);
+      setData(newData);
+    }
+  }
+
+  return (
+    <div className="App">
+      <h2>📊 React Excel‑Style Spreadsheet</h2>
+
+      {/* Toolbar */}
+      <div className="toolbar">
+        <button onClick={addRow}>➕ Add Row</button>
+        <button onClick={addColumn}>➕ Add Column</button>
+
+        <button
+          onClick={() => setMode("row")}
+          className={mode === "row" ? "active" : ""}
+        >
+          Row Mode
+        </button>
+        <button
+          onClick={() => setMode("col")}
+          className={mode === "col" ? "active" : ""}
+        >
+          Column Mode
+        </button>
+
+        <button
+          onClick={() => setOperation("avg")}
+          className={operation === "avg" ? "active" : ""}
+        >
+          AVG
+        </button>
+        <button
+          onClick={() => setOperation("max")}
+          className={operation === "max" ? "active" : ""}
+        >
+          MAX
+        </button>
+        <button
+          onClick={() => setOperation("min")}
+          className={operation === "min" ? "active" : ""}
+        >
+          MIN
+        </button>
+
+        <button onClick={applyResults}>Apply Results</button>
+      </div>
+
+      {/* Responsive Table */}
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              {data[0].map((_, colIndex) => (
+                <th key={colIndex}>{getColumnName(colIndex)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                <th>{rowIndex + 1}</th>
+                {row.map((cell, colIndex) => (
+                  <td key={colIndex}>
+                    <input
+                      type="text"
+                      value={cell}
+                      onChange={(e) =>
+                        updateCell(rowIndex, colIndex, e.target.value)
+                      }
+                    />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default App;
